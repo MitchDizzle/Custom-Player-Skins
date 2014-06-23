@@ -58,7 +58,7 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	CreateNative("CPS_GetSkin", Native_GetSkin);
 	CreateNative("CPS_RemoveSkin", Native_RemoveSkin);
 	
-	RegPluginLibrary("cps");
+	RegPluginLibrary("CustomPlayerSkins");
 	return APLRes_Success;
 }
 
@@ -154,7 +154,7 @@ CreatePlayerModelProp( client, String:sModel[] ) {
 	AcceptEntityInput(Ent, "SetParentAttachment", Ent, Ent, 0);
 	SDKHook( Ent, SDKHook_SetTransmit, OnShouldProp);
 
-	SetEntityRenderMode(client, RENDER_NONE);
+	//SetEntityRenderMode(client, RENDER_NONE);
 
 	g_PlayerModels[client] = EntIndexToEntRef(Ent);
 }
@@ -177,8 +177,8 @@ RemoveSkin( client ) {
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public Action:OnShouldProp( Ent, Client)
 {
-	if(Ent == EntRefToEntIndex(g_PlayerModels[Client]))
-		return Plugin_Handled;
+	//if(Ent == EntRefToEntIndex(g_PlayerModels[Client]))
+	//	return Plugin_Handled;
 	return Plugin_Continue;
 }
 

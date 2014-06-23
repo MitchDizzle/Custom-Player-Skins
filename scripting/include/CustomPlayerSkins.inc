@@ -1,9 +1,9 @@
 //Custom Player Skins include file
 
-#if defined _CPS_included
+#if defined _CustomPlayerSkins_included
  #endinput
 #endif
-#define _CPS_included
+#define _CustomPlayerSkins_included
 
 /**
  * Sets the client's skin from the given path.
@@ -33,16 +33,22 @@ native CPS_GetSkin( client );
  */
 native CPS_RemoveSkin( client );
 
-public SharedPlugin:__pl_CPS =
+public SharedPlugin:__pl_CustomPlayerSkins =
 {
-	name = "Custom Player Skins",
+	name = "CustomPlayerSkins",
 	file = "CustomPlayerSkins.smx",
+#if defined REQUIRE_PLUGIN
 	required = 1,
+#else
+	required = 0,
+#endif
 };
 
 #if !defined REQUIRE_PLUGIN
-public __pl_CPS_SetNTVOptional()
+public __pl_CustomPlayerSkins_SetNTVOptional()
 {
-	MarkNativeAsOptional("MatM_SetSkin");
+	MarkNativeAsOptional("CPS_SetSkin");
+	MarkNativeAsOptional("CPS_GetSkin");
+	MarkNativeAsOptional("CPS_RemoveSkin");
 }
 #endif

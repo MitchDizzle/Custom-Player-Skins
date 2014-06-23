@@ -32,7 +32,7 @@
  */
 #include <sdktools>
 #include <sdkhooks>
-#include <cps>
+#include <CustomPlayerSkins>
 #pragma semicolon 1
 
 #define MAXMODELLENGTH				128
@@ -64,7 +64,9 @@ public OnPluginStart()
 }
 
 public OnMapStart( )
+{
 	LoadConfig( );
+}
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ------Event_Spawn		(type: Event)
@@ -128,5 +130,6 @@ public SMCResult:KeyValue(Handle:smc, const String:key[], const String:value[], 
 	new group = StringToInt(key);
 	strcopy(c_sModels[group][c_MaxModels[group]],MAXMODELLENGTH,value);
 	PrecacheModel(value);
+	PrintToServer("(%s)%i-%i : %s", key, group, c_MaxModels[group], c_sModels[group][c_MaxModels[group]]);
 	c_MaxModels[group]++;
 }
