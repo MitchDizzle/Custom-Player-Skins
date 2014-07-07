@@ -10,7 +10,7 @@
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 3.0, as published by the
  * Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
@@ -28,7 +28,7 @@
  * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
  * or <http://www.sourcemod.net/license.php>.
  *
- * Version: 1.0.0
+ * Version: 1.1.1
  */
 #include <sdktools>
 #include <sdkhooks>
@@ -40,7 +40,7 @@
 
 new g_PlayerModels[MAXPLAYERS+1] = {INVALID_ENT_REFERENCE,...};
 
-#define PLUGIN_VERSION              "1.1.0"
+#define PLUGIN_VERSION              "1.1.1"
 public Plugin:myinfo = {
 	name = "Custom Player Skins (Core)",
 	author = "Mitchell",
@@ -56,7 +56,7 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	CreateNative("CPS_SetSkin", Native_SetSkin);
 	CreateNative("CPS_GetSkin", Native_GetSkin);
 	CreateNative("CPS_RemoveSkin", Native_RemoveSkin);
-	
+
 	RegPluginLibrary("CustomPlayerSkins");
 	return APLRes_Success;
 }
@@ -74,8 +74,8 @@ public OnPluginStart( )
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public OnPluginEnd( )
 {
-	for(new i = 1; i <= MaxClients; i++) 
-		if(IsClientInGame(i)) 
+	for(new i = 1; i <= MaxClients; i++)
+		if(IsClientInGame(i))
 			RemoveSkin(i);
 }
 
@@ -89,8 +89,9 @@ public Native_SetSkin(Handle:plugin, args)
 	if(NativeCheck_IsClientValid(client) && IsPlayerAlive(client))
 	{
 		new String:sModel[PLATFORM_MAX_PATH];
+		new mode = GetNativeCell( 3 );
 		GetNativeString(2, sModel, PLATFORM_MAX_PATH);
-		CreatePlayerModelProp(client, sModel);
+		CreatePlayerModelProp(client, sModel, RenderMode:mode);
 	}
 }
 
@@ -136,7 +137,7 @@ public Action:Event_Death(Handle:event, const String:name[], bool:dontBroadcast)
 	Creates a prop that will act as the player's model via bonemerging.
 	This prop is not solid, and no bullets will be affected by the skin.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
-CreatePlayerModelProp( client, String:sModel[] ) {
+CreatePlayerModelProp( client, String:sModel[], RenderMode:mode ) {
 	new Ent = CreateEntityByName("prop_dynamic_override");
 	DispatchKeyValue(Ent, "model", sModel);
 	DispatchKeyValue(Ent, "disablereceiveshadows", "1");
@@ -152,7 +153,7 @@ CreatePlayerModelProp( client, String:sModel[] ) {
 	AcceptEntityInput(Ent, "SetParentAttachment", Ent, Ent, 0);
 	SDKHook( Ent, SDKHook_SetTransmit, OnShouldProp);
 
-	SetEntityRenderMode(client, RENDER_NONE);
+	SetEntityRenderMode(client, mode);
 
 	g_PlayerModels[client] = EntIndexToEntRef(Ent);
 }
@@ -175,7 +176,11 @@ RemoveSkin( client ) {
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public Action:OnShouldProp( Ent, Client)
 {
-	if(Ent == EntRefToEntIndex(g_PlayerModels[Client]))
+	new Target = GetEntPropEnt(Client, Prop_Send, "m_hObserverTarget");
+
+	if((Target != -1 && NativeCheck_IsClientValid(Client)
+	&& Ent == EntRefToEntIndex(g_PlayerModels[Target]))
+	|| Ent == EntRefToEntIndex(g_PlayerModels[Client]))
 		return Plugin_Handled;
 	return Plugin_Continue;
 }
@@ -186,9 +191,9 @@ public Action:OnShouldProp( Ent, Client)
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public NativeCheck_IsClientValid(client)
 {
-	if (client <= 0 || client > MaxClients) 
+	if (client <= 0 || client > MaxClients)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client index %i is invalid", client);
-	if (!IsClientInGame(client)) 
+	if (!IsClientInGame(client))
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %i is not in game", client);
 	return true;
 }
