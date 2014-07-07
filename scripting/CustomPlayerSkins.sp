@@ -28,7 +28,7 @@
  * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
  * or <http://www.sourcemod.net/license.php>.
  *
- * Version: 1.0.0
+ * Version: 1.2.0
  */
 #include <sdktools>
 #include <sdkhooks>
@@ -38,12 +38,16 @@
 #define EF_NOSHADOW                 (1 << 4)
 #define EF_PARENT_ANIMATES          (1 << 9)
 
+#define CPS_NOFLAGS			0
+#define CPS_RENDER			(1 << 0)
+#define CPS_NOATTACHMENT	(1 << 1)
+
 new g_PlayerModels[MAXPLAYERS+1] = {INVALID_ENT_REFERENCE,...};
 
-#define PLUGIN_VERSION              "1.1.0"
+#define PLUGIN_VERSION              "1.2.0"
 public Plugin:myinfo = {
 	name = "Custom Player Skins (Core)",
-	author = "Mitchell",
+	author = "Mitchell, Root",
 	description = "Natives for custom skins to be applied to the players.",
 	version = PLUGIN_VERSION,
 	url = "SnBx.info"
@@ -90,7 +94,8 @@ public Native_SetSkin(Handle:plugin, args)
 	{
 		new String:sModel[PLATFORM_MAX_PATH];
 		GetNativeString(2, sModel, PLATFORM_MAX_PATH);
-		CreatePlayerModelProp(client, sModel);
+		new flags = GetNativeCell( 3 );
+		CreatePlayerModelProp(client, sModel, flags);
 	}
 }
 
@@ -128,6 +133,7 @@ public Native_RemoveSkin(Handle:plugin, args)
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public Action:Event_Death(Handle:event, const String:name[], bool:dontBroadcast)
 {
+	//Well what about the custom death flags?
 	RemoveSkin(GetClientOfUserId(GetEventInt(event, "userid")));
 }
 
@@ -136,7 +142,7 @@ public Action:Event_Death(Handle:event, const String:name[], bool:dontBroadcast)
 	Creates a prop that will act as the player's model via bonemerging.
 	This prop is not solid, and no bullets will be affected by the skin.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
-CreatePlayerModelProp( client, String:sModel[] ) {
+CreatePlayerModelProp( client, String:sModel[], flags = CPS_NOFLAGS) {
 	new Ent = CreateEntityByName("prop_dynamic_override");
 	DispatchKeyValue(Ent, "model", sModel);
 	DispatchKeyValue(Ent, "disablereceiveshadows", "1");
@@ -148,11 +154,15 @@ CreatePlayerModelProp( client, String:sModel[] ) {
 	SetEntProp(Ent, Prop_Send, "m_fEffects", EF_BONEMERGE|EF_NOSHADOW|EF_PARENT_ANIMATES);
 	SetVariantString("!activator");
 	AcceptEntityInput(Ent, "SetParent", client, Ent, 0);
-	SetVariantString("forward");
-	AcceptEntityInput(Ent, "SetParentAttachment", Ent, Ent, 0);
+	if(flags & CPS_NOATTACHMENT)
+	{
+		SetVariantString("forward");
+		AcceptEntityInput(Ent, "SetParentAttachment", Ent, Ent, 0);
+	}
 	SDKHook( Ent, SDKHook_SetTransmit, OnShouldProp);
 
-	SetEntityRenderMode(client, RENDER_NONE);
+	if(!(flags & CPS_RENDER))
+		SetEntityRenderMode(client, RENDER_NONE);
 
 	g_PlayerModels[client] = EntIndexToEntRef(Ent);
 }
@@ -170,25 +180,29 @@ RemoveSkin( client ) {
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ------OnShouldProp		(type: SDKHooks SetTransmit Function)
-	Displays the skin to everybody but thep player and anybody spectating
+	Displays the skin to everybody but the player and anybody spectating
 	first person of said player.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public Action:OnShouldProp( Ent, Client)
 {
 	if(Ent == EntRefToEntIndex(g_PlayerModels[Client]))
 		return Plugin_Handled;
+	new target = GetEntPropEnt(Client, Prop_Send, "m_hObserverTarget");
+	if((target > 0 && target <= MaxClients) && \
+		(Ent == EntRefToEntIndex(g_PlayerModels[target])))
+		return Plugin_Handled;
 	return Plugin_Continue;
 }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ------NativeCheck_IsClientValid		(type: Public Function)
-	Not sure who created this, but i ripped it from some where...
+	Not sure who created this, but I ripped it from some where...
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public NativeCheck_IsClientValid(client)
 {
-	if (client <= 0 || client > MaxClients) 
+	if (client <= 0 || client > MaxClients)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client index %i is invalid", client);
-	if (!IsClientInGame(client)) 
+	if (!IsClientInGame(client))
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %i is not in game", client);
 	return true;
 }

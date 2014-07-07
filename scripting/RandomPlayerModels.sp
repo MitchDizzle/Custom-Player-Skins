@@ -28,7 +28,7 @@
  * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
  * or <http://www.sourcemod.net/license.php>.
  *
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 #include <sdktools>
 #include <sdkhooks>
@@ -45,7 +45,7 @@
 new String:c_sModels[MAXTEAMS][MAXMODELS][MAXMODELLENGTH];
 new c_MaxModels[MAXTEAMS];
 
-#define PLUGIN_VERSION              "1.0.0"
+#define PLUGIN_VERSION              "1.0.1"
 public Plugin:myinfo = {
 	name = "Custom Player Skins (Random Module)",
 	author = "Mitchell",
@@ -91,7 +91,7 @@ CreateSkin( client )
 		group = GetRandomGroup( );
 	if(c_MaxModels[group] == 0) group = 0;
 	new skin = GetRandomInt(0, c_MaxModels[group]-1);
-	CPS_SetSkin(client, c_sModels[group][skin]);
+	CPS_SetSkin(client, c_sModels[group][skin], CPS_RENDER);
 }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
