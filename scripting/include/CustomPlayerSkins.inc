@@ -10,10 +10,11 @@
  *
  * @param client	Client index
  * @param model		User input for model path
+ * @param mode		RenderMode for client model
  * @noreturn 
  * @error			Invalid client.
  */
-native CPS_SetSkin( client, String:model[] );
+native CPS_SetSkin( client, String:model[], RenderMode:mode=RENDER_NONE);
 
 /**
  * Gets the client's skin entity reference.
