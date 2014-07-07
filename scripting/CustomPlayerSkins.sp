@@ -33,7 +33,6 @@
 #include <sdktools>
 #include <sdkhooks>
 #pragma semicolon 1
-#define MAXMODELLENGTH				128
 
 #define EF_BONEMERGE                (1 << 0)
 #define EF_NOSHADOW                 (1 << 4)
@@ -41,7 +40,7 @@
 
 new g_PlayerModels[MAXPLAYERS+1] = {INVALID_ENT_REFERENCE,...};
 
-#define PLUGIN_VERSION              "1.0.0"
+#define PLUGIN_VERSION              "1.1.0"
 public Plugin:myinfo = {
 	name = "Custom Player Skins (Core)",
 	author = "Mitchell",
@@ -89,8 +88,8 @@ public Native_SetSkin(Handle:plugin, args)
 	new client = GetNativeCell( 1 );
 	if(NativeCheck_IsClientValid(client) && IsPlayerAlive(client))
 	{
-		new String:sModel[MAXMODELLENGTH];
-		GetNativeString(2, sModel, MAXMODELLENGTH);
+		new String:sModel[PLATFORM_MAX_PATH];
+		GetNativeString(2, sModel, PLATFORM_MAX_PATH);
 		CreatePlayerModelProp(client, sModel);
 	}
 }
@@ -124,13 +123,12 @@ public Native_RemoveSkin(Handle:plugin, args)
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ------Event_Death		(type: Event)
-	When a player dies we should remove the skin, so there isnt a random
+	When a player dies we should remove the skin, so there isn't a random
 	prop floating.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public Action:Event_Death(Handle:event, const String:name[], bool:dontBroadcast)
 {
-	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	RemoveSkin(client);
+	RemoveSkin(GetClientOfUserId(GetEventInt(event, "userid")));
 }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -154,7 +152,7 @@ CreatePlayerModelProp( client, String:sModel[] ) {
 	AcceptEntityInput(Ent, "SetParentAttachment", Ent, Ent, 0);
 	SDKHook( Ent, SDKHook_SetTransmit, OnShouldProp);
 
-	//SetEntityRenderMode(client, RENDER_NONE);
+	SetEntityRenderMode(client, RENDER_NONE);
 
 	g_PlayerModels[client] = EntIndexToEntRef(Ent);
 }
@@ -177,8 +175,8 @@ RemoveSkin( client ) {
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public Action:OnShouldProp( Ent, Client)
 {
-	//if(Ent == EntRefToEntIndex(g_PlayerModels[Client]))
-	//	return Plugin_Handled;
+	if(Ent == EntRefToEntIndex(g_PlayerModels[Client]))
+		return Plugin_Handled;
 	return Plugin_Continue;
 }
 
