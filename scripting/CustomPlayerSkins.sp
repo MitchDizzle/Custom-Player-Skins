@@ -60,7 +60,6 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	CreateNative("CPS_SetSkin", Native_SetSkin);
 	CreateNative("CPS_GetSkin", Native_GetSkin);
 	CreateNative("CPS_RemoveSkin", Native_RemoveSkin);
-	
 	RegPluginLibrary("CustomPlayerSkins");
 	return APLRes_Success;
 }
@@ -154,16 +153,14 @@ CreatePlayerModelProp( client, String:sModel[], flags = CPS_NOFLAGS) {
 	SetEntProp(Ent, Prop_Send, "m_fEffects", EF_BONEMERGE|EF_NOSHADOW|EF_PARENT_ANIMATES);
 	SetVariantString("!activator");
 	AcceptEntityInput(Ent, "SetParent", client, Ent, 0);
-	if(flags & CPS_NOATTACHMENT)
+	if(!(flags & CPS_NOATTACHMENT))
 	{
 		SetVariantString("forward");
 		AcceptEntityInput(Ent, "SetParentAttachment", Ent, Ent, 0);
 	}
 	SDKHook( Ent, SDKHook_SetTransmit, OnShouldProp);
-
 	if(!(flags & CPS_RENDER))
 		SetEntityRenderMode(client, RENDER_NONE);
-
 	g_PlayerModels[client] = EntIndexToEntRef(Ent);
 }
 
