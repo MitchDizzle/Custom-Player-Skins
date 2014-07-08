@@ -10,7 +10,7 @@
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 3.0, as published by the
  * Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
@@ -60,7 +60,7 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	CreateNative("CPS_SetSkin", Native_SetSkin);
 	CreateNative("CPS_GetSkin", Native_GetSkin);
 	CreateNative("CPS_RemoveSkin", Native_RemoveSkin);
-	
+
 	RegPluginLibrary("CustomPlayerSkins");
 	return APLRes_Success;
 }
@@ -78,8 +78,8 @@ public OnPluginStart( )
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public OnPluginEnd( )
 {
-	for(new i = 1; i <= MaxClients; i++) 
-		if(IsClientInGame(i)) 
+	for(new i = 1; i <= MaxClients; i++)
+		if(IsClientInGame(i))
 			RemoveSkin(i);
 }
 
@@ -154,7 +154,7 @@ CreatePlayerModelProp( client, String:sModel[], flags = CPS_NOFLAGS) {
 	SetEntProp(Ent, Prop_Send, "m_fEffects", EF_BONEMERGE|EF_NOSHADOW|EF_PARENT_ANIMATES);
 	SetVariantString("!activator");
 	AcceptEntityInput(Ent, "SetParent", client, Ent, 0);
-	if(flags & CPS_NOATTACHMENT)
+	if(!(flags & CPS_NOATTACHMENT))
 	{
 		SetVariantString("forward");
 		AcceptEntityInput(Ent, "SetParentAttachment", Ent, Ent, 0);
