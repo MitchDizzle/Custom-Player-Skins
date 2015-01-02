@@ -38,6 +38,19 @@ native CPS_GetSkin( client );
  */
 native CPS_RemoveSkin( client );
 
+/**
+ * Sets the client's skin from the given path.
+ *
+ * @param owner		Client index of the skin's owner
+ * @param client	Client index of the player that will see the skin.
+ * @param transmit	0 - Do not transmit at all.
+					1 - Transmit only if other cases pass.
+					2 - Override other checks.
+ * @noreturn 
+ * @error			Invalid client.
+ */
+native CPS_SetTransmit( owner, client, transmit );
+
 public SharedPlugin:__pl_CustomPlayerSkins =
 {
 	name = "CustomPlayerSkins",

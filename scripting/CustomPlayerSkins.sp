@@ -43,8 +43,9 @@
 #define CPS_NOATTACHMENT	(1 << 1)
 
 new g_PlayerModels[MAXPLAYERS+1] = {INVALID_ENT_REFERENCE,...};
+new bool:g_TransmitSkin[MAXPLAYERS+1][MAXPLAYERS+1];
 
-#define PLUGIN_VERSION              "1.2.0"
+#define PLUGIN_VERSION              "1.3.0"
 public Plugin:myinfo = {
 	name = "Custom Player Skins (Core)",
 	author = "Mitchell, Root",
@@ -60,6 +61,8 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	CreateNative("CPS_SetSkin", Native_SetSkin);
 	CreateNative("CPS_GetSkin", Native_GetSkin);
 	CreateNative("CPS_RemoveSkin", Native_RemoveSkin);
+	
+	CreateNative("CPS_SetTransmit", Native_SetTransmit);
 	RegPluginLibrary("CustomPlayerSkins");
 	return APLRes_Success;
 }
@@ -69,6 +72,9 @@ public OnPluginStart( )
 	CreateConVar("sm_custom_player_skins_version", PLUGIN_VERSION, "Custom Player Skins Version", \
 											FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
 	HookEvent("player_death", Event_Death);
+	for(new i = 1; i <= MaxClients; i++)
+		if(IsClientInGame(i))
+			setTransmit(i);
 }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -77,7 +83,7 @@ public OnPluginStart( )
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public OnPluginEnd( )
 {
-	for(new i = 1; i <= MaxClients; i++) 
+	for(new i = 1; i <= MaxClients; i++)
 		if(IsClientInGame(i)) 
 			RemoveSkin(i);
 }
@@ -126,6 +132,25 @@ public Native_RemoveSkin(Handle:plugin, args)
 }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+------Native_SetTransmit	(type: Native)
+	Core function to set the player's skin from another plugin.
+	CPS_SetTransmit( owner, client, transmit )
+	owner is the player that owns the skin.
+	client is the player that is wanting to see the skin.
+	transmit is a int, depending on the level is the override:
+		0 - Do not transmit at all.
+		1 - Transmit only if all other cases pass
+		2 - Force transmit, bypassing other checks.
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+public Native_SetTransmit(Handle:plugin, args)
+{
+	new owner = GetNativeCell( 1 );
+	new client = GetNativeCell( 2 );
+	new transmit = GetNativeCell( 3 );
+	setTransmit(owner, client, transmit);
+}
+
+/*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ------Event_Death		(type: Event)
 	When a player dies we should remove the skin, so there isn't a random
 	prop floating.
@@ -134,6 +159,25 @@ public Action:Event_Death(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	//Well what about the custom death flags?
 	RemoveSkin(GetClientOfUserId(GetEventInt(event, "userid")));
+}
+/*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+------setTransmit		(type: Public Function)
+	Multiple uses for this function:
+		Resetting all of the player's transmit options
+		Setting a single option on the variable for a player.
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+setTransmit( owner, client = 0, transmit = 1) {
+	if(client == 0)
+	{
+		for(new i = 1; i <= MaxClients; i++)
+		{
+			setTransmit(owner, i, transmit);
+		}
+	}
+	else
+	{
+		g_TransmitSkin[owner][client] = transmit;
+	}
 }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -148,7 +192,7 @@ CreatePlayerModelProp( client, String:sModel[], flags = CPS_NOFLAGS) {
 	DispatchKeyValue(Ent, "disableshadows", "1");
 	DispatchKeyValue(Ent, "solid", "0");
 	DispatchKeyValue(Ent, "spawnflags", "1");
-	SetEntProp(Ent, Prop_Send, "m_CollisionGroup",	   11);
+	SetEntProp(Ent, Prop_Send, "m_CollisionGroup", 11);
 	DispatchSpawn(Ent);
 	SetEntProp(Ent, Prop_Send, "m_fEffects", EF_BONEMERGE|EF_NOSHADOW|EF_PARENT_ANIMATES);
 	SetVariantString("!activator");
@@ -162,6 +206,7 @@ CreatePlayerModelProp( client, String:sModel[], flags = CPS_NOFLAGS) {
 	if(!(flags & CPS_RENDER))
 		SetEntityRenderMode(client, RENDER_NONE);
 	g_PlayerModels[client] = EntIndexToEntRef(Ent);
+	setTransmit(client, client, false);
 }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -173,6 +218,7 @@ RemoveSkin( client ) {
 		AcceptEntityInput(g_PlayerModels[client], "Kill");
 	SetEntityRenderMode(client, RENDER_NORMAL);
 	g_PlayerModels[client] = INVALID_ENT_REFERENCE;
+	setTransmit(client);
 }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -182,12 +228,24 @@ RemoveSkin( client ) {
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public Action:OnShouldProp( Ent, Client)
 {
+	for(new i = 1; i <= MaxClients; i++)
+	{
+		if(Ent == EntRefToEntIndex(g_PlayerModels[i]))
+		{
+			if(g_TransmitSkin[i][Client])
+				return Plugin_Handled;
+			break;
+		}
+	}
+
 	if(Ent == EntRefToEntIndex(g_PlayerModels[Client]))
 		return Plugin_Handled;
+
 	new target = GetEntPropEnt(Client, Prop_Send, "m_hObserverTarget");
 	if((target > 0 && target <= MaxClients) && \
 		(Ent == EntRefToEntIndex(g_PlayerModels[target])))
 		return Plugin_Handled;
+
 	return Plugin_Continue;
 }
 
