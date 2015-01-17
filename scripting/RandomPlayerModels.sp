@@ -91,7 +91,7 @@ CreateSkin( client )
 		group = GetRandomGroup( );
 	if(c_MaxModels[group] == 0) group = 0;
 	new skin = GetRandomInt(0, c_MaxModels[group]-1);
-	CPS_SetSkin(client, c_sModels[group][skin], CPS_RENDER);
+	CPS_SetSkin(client, c_sModels[group][skin]);
 }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -130,6 +130,6 @@ public SMCResult:KeyValue(Handle:smc, const String:key[], const String:value[], 
 	new group = StringToInt(key);
 	strcopy(c_sModels[group][c_MaxModels[group]],MAXMODELLENGTH,value);
 	PrecacheModel(value);
-	PrintToServer("(%s)%i-%i : %s", key, group, c_MaxModels[group], c_sModels[group][c_MaxModels[group]]);
+	//PrintToServer("(%s)%i-%i : %s", key, group, c_MaxModels[group], c_sModels[group][c_MaxModels[group]]);
 	c_MaxModels[group]++;
 }
