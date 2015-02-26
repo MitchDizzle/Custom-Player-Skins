@@ -36,14 +36,17 @@
 
 #define EF_BONEMERGE                (1 << 0)
 #define EF_NOSHADOW                 (1 << 4)
+#define EF_NORECEIVESHADOW          (1 << 6)
 #define EF_PARENT_ANIMATES          (1 << 9)
 
-#define CPS_NOFLAGS			0
-#define CPS_RENDER			(1 << 0)
-#define CPS_NOATTACHMENT	(1 << 1)
+#define CPS_NOFLAGS         0
+#define CPS_RENDER          (1 << 0)
+#define CPS_NOATTACHMENT    (1 << 1)
+#define CPS_IGNOREDEATH     (1 << 2) //This will prevent the removal of the skin on death.
 
 new g_PlayerModels[MAXPLAYERS+1] = {INVALID_ENT_REFERENCE,...};
 new g_TransmitSkin[MAXPLAYERS+1][MAXPLAYERS+1];
+new g_SkinFlags[MAXPLAYERS+1];
 
 #define PLUGIN_VERSION              "1.3.0"
 public Plugin:myinfo = {
@@ -144,7 +147,11 @@ public Native_HasSkin(Handle:plugin, args) {
 public Native_RemoveSkin(Handle:plugin, args) {
 	new client = GetNativeCell(1);
 	if(NativeCheck_IsClientValid(client) && IsPlayerAlive(client)) {
-		RemoveSkin(client);
+		new flags = CPS_NOFLAGS;
+		if(args > 1) {
+			flags = GetNativeCell(2);
+		}
+		RemoveSkin(client, flags);
 	}
 	return INVALID_ENT_REFERENCE;
 }
@@ -168,13 +175,28 @@ public Native_SetTransmit(Handle:plugin, args) {
 }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+------Native_GetFlags	(type: Native)
+	This just returns the flags of the skin, probably will never be used..
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
+public Native_GetFlags(Handle:plugin, args) {
+	new client = GetNativeCell(1);
+	//I didnt do any checks here for the client to be in game since it is a variable..
+	return g_SkinFlags[client];
+}
+
+/*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ------Event_Death		(type: Event)
 	When a player dies we should remove the skin, so there isn't a random
 	prop floating.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public Action:Event_Death(Handle:event, const String:name[], bool:dontBroadcast) {
 	//Well what about the custom death flags?
-	RemoveSkin(GetClientOfUserId(GetEventInt(event, "userid")));
+	new client = GetClientOfUserId(GetEventInt(event, "userid"));
+	if(IsClientInGame(client)) {
+		if(!(g_SkinFlags[client] & CPS_IGNOREDEATH)) {
+			RemoveSkin(client, CPS_RENDER); //Why would we change the render of a dead person O_o
+		}
+	}
 }
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ------setTransmit		(type: Public Function)
@@ -197,7 +219,8 @@ setTransmit( owner, client = 0, transmit = 1) {
 	Creates a prop that will act as the player's model via bonemerging.
 	This prop is not solid, and no bullets will be affected by the skin.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
-CreatePlayerModelProp( client, String:sModel[], flags = CPS_NOFLAGS) {
+CreatePlayerModelProp(client, String:sModel[], flags = CPS_NOFLAGS) {
+	RemoveSkin(client, CPS_RENDER);
 	new Ent = CreateEntityByName("prop_dynamic_override");
 	DispatchKeyValue(Ent, "model", sModel);
 	DispatchKeyValue(Ent, "disablereceiveshadows", "1");
@@ -213,11 +236,13 @@ CreatePlayerModelProp( client, String:sModel[], flags = CPS_NOFLAGS) {
 		SetVariantString("forward");
 		AcceptEntityInput(Ent, "SetParentAttachment", Ent, Ent, 0);
 	}
-	SDKHook(Ent, SDKHook_SetTransmit, OnShouldDisplay);
 	if(!(flags & CPS_RENDER)) {
 		SetEntityRenderMode(client, RENDER_NONE);
 	}
+	g_SkinFlags[client] = flags;
 	g_PlayerModels[client] = EntIndexToEntRef(Ent);
+	//Transmit Settings
+	SDKHook(Ent, SDKHook_SetTransmit, OnShouldDisplay);
 	setTransmit(client, client, 0);
 	return Ent;
 }
@@ -226,12 +251,15 @@ CreatePlayerModelProp( client, String:sModel[], flags = CPS_NOFLAGS) {
 ------RemoveSkin		(type: Public Function)
 	Remove the skin, if it exists, and also set the player back to normal.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
-RemoveSkin(client) {
+RemoveSkin(client, flags = CPS_NOFLAGS) {
 	if(IsValidEntity(g_PlayerModels[client])) {
 		AcceptEntityInput(g_PlayerModels[client], "Kill");
 	}
-	SetEntityRenderMode(client, RENDER_NORMAL);
+	if(!(flags & CPS_RENDER)) {
+		SetEntityRenderMode(client, RENDER_NORMAL);
+	}
 	g_PlayerModels[client] = INVALID_ENT_REFERENCE;
+	g_SkinFlags[client] = CPS_NOFLAGS;
 	setTransmit(client);
 }
 
