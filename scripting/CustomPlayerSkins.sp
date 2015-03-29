@@ -16,7 +16,7 @@ new g_PlayerModels[MAXPLAYERS+1] = {INVALID_ENT_REFERENCE,...};
 new g_TransmitSkin[MAXPLAYERS+1][MAXPLAYERS+1];
 new g_SkinFlags[MAXPLAYERS+1];
 
-#define PLUGIN_VERSION              "1.3.0"
+#define PLUGIN_VERSION              "1.3.1"
 public Plugin:myinfo = {
 	name = "Custom Player Skins (Core)",
 	author = "Mitchell, Root",
@@ -245,11 +245,11 @@ public Action:OnShouldDisplay(Ent, Client) {
 			break;
 		}
 	}
-
+/*
 	if(Ent == EntRefToEntIndex(g_PlayerModels[Client])) {
 		return Plugin_Handled;
 	}
-
+*/
 	new target = GetEntPropEnt(Client, Prop_Send, "m_hObserverTarget");
 	if((target > 0 && target <= MaxClients) && \
 		(Ent == EntRefToEntIndex(g_PlayerModels[target]))) {
