@@ -16,7 +16,8 @@ new g_PlayerModels[MAXPLAYERS+1] = {INVALID_ENT_REFERENCE,...};
 new g_TransmitSkin[MAXPLAYERS+1][MAXPLAYERS+1];
 new g_SkinFlags[MAXPLAYERS+1];
 
-#define PLUGIN_VERSION              "1.3.1"
+new EngineVersion:EVGame;
+#define PLUGIN_VERSION              "1.3.2"
 public Plugin:myinfo = {
 	name = "Custom Player Skins (Core)",
 	author = "Mitchell, Root",
@@ -44,6 +45,9 @@ public OnPluginStart( )
 	CreateConVar("sm_custom_player_skins_version", PLUGIN_VERSION, "Custom Player Skins Version", \
 											FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
 	HookEvent("player_death", Event_Death);
+
+	EVGame = GetEngineVersion();
+
 	for(new i = 1; i <= MaxClients; i++) {
 		if(IsClientInGame(i)) {
 			setTransmit(i);
@@ -194,14 +198,18 @@ CreatePlayerModelProp(client, String:sModel[], flags = CPS_NOFLAGS) {
 	DispatchKeyValue(Ent, "disablereceiveshadows", "1");
 	DispatchKeyValue(Ent, "disableshadows", "1");
 	DispatchKeyValue(Ent, "solid", "0");
-	DispatchKeyValue(Ent, "spawnflags", "1");
+	DispatchKeyValue(Ent, "spawnflags", "256");
 	SetEntProp(Ent, Prop_Send, "m_CollisionGroup", 11);
 	DispatchSpawn(Ent);
 	SetEntProp(Ent, Prop_Send, "m_fEffects", EF_BONEMERGE|EF_NOSHADOW|EF_PARENT_ANIMATES);
 	SetVariantString("!activator");
 	AcceptEntityInput(Ent, "SetParent", client, Ent, 0);
 	if(!(flags & CPS_NOATTACHMENT)) {
-		SetVariantString("forward");
+		if(EVGame == Engine_CSGO) {
+			SetVariantString("facemask");
+		} else {
+			SetVariantString("forward");
+		}
 		AcceptEntityInput(Ent, "SetParentAttachment", Ent, Ent, 0);
 	}
 	if(!(flags & CPS_RENDER)) { //Does not have CPS_RENDER flag
