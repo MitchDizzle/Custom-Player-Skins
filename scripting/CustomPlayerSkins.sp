@@ -16,8 +16,7 @@ new g_PlayerModels[MAXPLAYERS+1] = {INVALID_ENT_REFERENCE,...};
 new g_TransmitSkin[MAXPLAYERS+1][MAXPLAYERS+1];
 new g_SkinFlags[MAXPLAYERS+1];
 
-new EngineVersion:EVGame;
-#define PLUGIN_VERSION              "1.3.2"
+#define PLUGIN_VERSION              "1.3.3"
 public Plugin:myinfo = {
 	name = "Custom Player Skins (Core)",
 	author = "Mitchell, Root",
@@ -45,8 +44,6 @@ public OnPluginStart( )
 	CreateConVar("sm_custom_player_skins_version", PLUGIN_VERSION, "Custom Player Skins Version", \
 											FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
 	HookEvent("player_death", Event_Death);
-
-	EVGame = GetEngineVersion();
 
 	for(new i = 1; i <= MaxClients; i++) {
 		if(IsClientInGame(i)) {
@@ -205,11 +202,7 @@ CreatePlayerModelProp(client, String:sModel[], flags = CPS_NOFLAGS) {
 	SetVariantString("!activator");
 	AcceptEntityInput(Ent, "SetParent", client, Ent, 0);
 	if(!(flags & CPS_NOATTACHMENT)) {
-		if(EVGame == Engine_CSGO) {
-			SetVariantString("facemask");
-		} else {
-			SetVariantString("forward");
-		}
+		SetVariantString("primary");
 		AcceptEntityInput(Ent, "SetParentAttachment", Ent, Ent, 0);
 	}
 	if(!(flags & CPS_RENDER)) { //Does not have CPS_RENDER flag
