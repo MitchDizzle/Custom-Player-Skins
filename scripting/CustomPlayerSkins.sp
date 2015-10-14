@@ -16,7 +16,7 @@ new g_PlayerModels[MAXPLAYERS+1] = {INVALID_ENT_REFERENCE,...};
 new g_TransmitSkin[MAXPLAYERS+1][MAXPLAYERS+1];
 new g_SkinFlags[MAXPLAYERS+1];
 
-#define PLUGIN_VERSION              "1.3.2"
+#define PLUGIN_VERSION              "1.3.3"
 public Plugin:myinfo = {
 	name = "Custom Player Skins (Core)",
 	author = "Mitchell, Root",
