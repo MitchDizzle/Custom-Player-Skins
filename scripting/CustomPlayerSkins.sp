@@ -17,7 +17,7 @@ new g_TransmitSkin[MAXPLAYERS+1][MAXPLAYERS+1];
 new g_SkinFlags[MAXPLAYERS+1];
 
 new EngineVersion:EVGame;
-#define PLUGIN_VERSION              "1.3.2"
+#define PLUGIN_VERSION              "1.3.3"
 public Plugin:myinfo = {
 	name = "Custom Player Skins (Core)",
 	author = "Mitchell, Root",
@@ -28,8 +28,7 @@ public Plugin:myinfo = {
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ------Plugin Functions
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
-public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
-{
+public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max) {
 	CreateNative("CPS_SetSkin", Native_SetSkin);
 	CreateNative("CPS_GetSkin", Native_GetSkin);
 	CreateNative("CPS_RemoveSkin", Native_RemoveSkin);
@@ -40,8 +39,7 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	return APLRes_Success;
 }
 
-public OnPluginStart( )
-{
+public OnPluginStart() {
 	CreateConVar("sm_custom_player_skins_version", PLUGIN_VERSION, "Custom Player Skins Version", \
 											FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
 	HookEvent("player_death", Event_Death);
@@ -55,6 +53,9 @@ public OnPluginStart( )
 	}
 }
 
+public OnMapStart() {
+	SetCvar("sv_disable_immunity_alpha", "1");
+}
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ------OnPluginEnd		(type: Plugin Function)
 	Make sure to delete all the skins! And reset their colors...
@@ -206,14 +207,15 @@ CreatePlayerModelProp(client, String:sModel[], flags = CPS_NOFLAGS) {
 	AcceptEntityInput(Ent, "SetParent", client, Ent, 0);
 	if(!(flags & CPS_NOATTACHMENT)) {
 		if(EVGame == Engine_CSGO) {
-			SetVariantString("facemask");
+			SetVariantString("primary");
 		} else {
 			SetVariantString("forward");
 		}
 		AcceptEntityInput(Ent, "SetParentAttachment", Ent, Ent, 0);
 	}
 	if(!(flags & CPS_RENDER)) { //Does not have CPS_RENDER flag
-		SetEntityRenderMode(client, RENDER_NONE);
+		SetEntityRenderColor(client, 255, 255, 255, 0);
+		SetEntityRenderMode(client, RENDER_TRANSALPHA);
 	}
 	g_SkinFlags[client] = flags;
 	g_PlayerModels[client] = EntIndexToEntRef(Ent);
