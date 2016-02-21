@@ -17,7 +17,7 @@ new g_TransmitSkin[MAXPLAYERS+1][MAXPLAYERS+1];
 new g_SkinFlags[MAXPLAYERS+1];
 
 new EngineVersion:EVGame;
-#define PLUGIN_VERSION              "1.3.3"
+#define PLUGIN_VERSION              "1.3.4"
 public Plugin:myinfo = {
 	name = "Custom Player Skins (Core)",
 	author = "Mitchell, Root",
@@ -91,9 +91,9 @@ public Native_SetSkin(Handle:plugin, args) {
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public Native_GetSkin(Handle:plugin, args) {
 	new client = GetNativeCell(1);
-	if(NativeCheck_IsClientValid(client) && IsPlayerAlive(client)) {
+	if(NativeCheck_IsClientValid(client)) {
 		if(IsValidEntity(g_PlayerModels[client])) {
-			return g_PlayerModels[client];
+			return EntRefToEntIndex(g_PlayerModels[client]);
 		}
 	}
 	return INVALID_ENT_REFERENCE;
@@ -119,7 +119,7 @@ public Native_HasSkin(Handle:plugin, args) {
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public Native_RemoveSkin(Handle:plugin, args) {
 	new client = GetNativeCell(1);
-	if(NativeCheck_IsClientValid(client) && IsPlayerAlive(client)) {
+	if(NativeCheck_IsClientValid(client)) {
 		new flags = CPS_NOFLAGS;
 		if(args > 1) {
 			flags = GetNativeCell(2);
@@ -202,7 +202,7 @@ CreatePlayerModelProp(client, String:sModel[], flags = CPS_NOFLAGS) {
 	DispatchKeyValue(Ent, "spawnflags", "256");
 	SetEntProp(Ent, Prop_Send, "m_CollisionGroup", 11);
 	DispatchSpawn(Ent);
-	SetEntProp(Ent, Prop_Send, "m_fEffects", EF_BONEMERGE|EF_NOSHADOW|EF_PARENT_ANIMATES);
+	SetEntProp(Ent, Prop_Send, "m_fEffects", EF_BONEMERGE|EF_NOSHADOW|EF_NORECEIVESHADOW|EF_PARENT_ANIMATES);
 	SetVariantString("!activator");
 	AcceptEntityInput(Ent, "SetParent", client, Ent, 0);
 	if(!(flags & CPS_NOATTACHMENT)) {
