@@ -12,14 +12,15 @@
 
 char c_sModels[MAXTEAMS][MAXMODELS][MAXMODELLENGTH];
 int c_MaxModels[MAXTEAMS];
+bool canSkin = false;
 
-#define PLUGIN_VERSION              "1.0.3"
+#define PLUGIN_VERSION              "1.0.4"
 public Plugin myinfo = {
 	name = "Random Player Models (CPS)",
 	author = "Mitchell",
 	description = "Picks a random skin from a file, depending on the team",
 	version = PLUGIN_VERSION,
-	url = "SnBx.info"
+	url = "https://forums.alliedmods.net/showthread.php?p=2140485"
 }
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ------Plugin Functions
@@ -40,7 +41,7 @@ public void OnMapStart() {
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 public Action Event_Spawn(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if(IsPlayerAlive(client)) {
+	if(IsPlayerAlive(client) && canSkin) {
 		CreateSkin(client);
 	}
 }
@@ -83,7 +84,15 @@ public void LoadConfig() {
 	smc.OnKeyValue = KeyValue; 
 	char sPaths[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, sPaths, sizeof(sPaths), "configs/randomplayermodels.cfg");
-	smc.ParseFile(sPaths);
+	if(!FileExists(sPaths)) {
+		LogError("WARNING: This is a DIFFERENT plugin than the CustomPlayerSkins API, if you only wanted to use the API then uninstall this plugin!");
+		LogError(" This plugin is only using the CustomPlayerSkins API and will have unexpected results if this is installed with another plugin that uses this API.");
+		LogError(" AlliedModders Forum Post for this plugin (not CustomPlayerSkins): https://forums.alliedmods.net/showthread.php?p=2140485");
+		SetFailState("RandomPlayerModels config is missing!");
+	} else {
+		smc.ParseFile(sPaths);
+		canSkin = true;
+	}
 	delete smc;
 } 
 public SMCResult KeyValue(Handle smc, const char[] key, const char[] value, bool key_quotes, bool value_quotes) {
