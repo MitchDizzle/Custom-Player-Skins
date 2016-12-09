@@ -20,7 +20,7 @@
  * @return The skin entity index
  * @error Invalid client.
  */
-native int CPS_SetSkin(int client, char[] model, int flags);
+native int CPS_SetSkin(int client, char[] model, int flags = CPS_NOFLAGS);
 
 /**
  * Gets the client's skin entity reference.
@@ -47,7 +47,7 @@ native bool CPS_HasSkin(int client);
  * @noreturn
  * @error Invalid client.
  */
-native void CPS_RemoveSkin(int client, int flags);
+native void CPS_RemoveSkin(int client, int flags = CPS_NOFLAGS);
 
 
 /**
